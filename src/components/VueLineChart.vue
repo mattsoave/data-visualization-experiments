@@ -94,8 +94,9 @@
 </script>
 
 <style lang="scss" scoped>
-  div.container {
-    background-color: #f3f3f3;
+  .container, svg {
+    width: 100%;
+    height: 100%;
   }
   svg {}
   path {
