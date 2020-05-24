@@ -2,7 +2,7 @@
     <div class="container" ref="container">
         <svg class="svg" ref='svg'>
             <g>
-                <path v-for="(line, i) in lines" :d="line" :stroke='colors[i%10]' />
+                <path v-for="(line, i) in lines" :d="line" :stroke="colors[i%10]" :key="`${unique}${i}`" />
             </g>
             <g class="x-axis"></g>
             <g class="y-axis"></g>
@@ -13,6 +13,7 @@
 
 <script>
   import * as d3 from 'd3';
+  import * as _ from 'lodash';
 
   window.d2 = d3;
 
@@ -24,7 +25,7 @@
 
         svg: null,
         x: d3.scaleLinear(),
-        y: d3.scaleLinear(),
+        // y: d3.scaleLog(),
         lines: [],
 
         colors: d3.schemeTableau10,
@@ -33,10 +34,8 @@
           width: null,
           height: null
         },
-        d3Parameters: {
-          xScale: d3.scaleLinear(),
-          yScale: d3.scaleLinear(),
-        }
+
+        unique: null,
       };
     },
     props: {
@@ -45,12 +44,19 @@
         default() {
           return [];
         },
+      },
+      options: {
+        type: Object,
+        default() {
+          return {};
+        }
       }
     },
     created() {
       for (let i = 0; i < 50; i++) {
         this.data.push(Math.pow(i, 2 + Math.random() * .1));
       }
+      this.unique = Math.random();
     },
     watch: {
       vals() {
@@ -76,17 +82,21 @@
         // Set the y-scale
         this.y
           .range([this.geometry.height - 20, 10])
-          .domain([this.processed.extremes.yMin, this.processed.extremes.yMax]);
+          .domain([
+            // Temp: for log scales, ensure we don't start at 0
+            Math.max(this.processed.extremes.yMin, this.opts.y.type === 'log' ? 1 : null),
+            this.processed.extremes.yMax
+          ]);
 
         // Assign the scales to the axes
         d3.axisLeft().scale(this.x);
         d3.axisBottom().scale(this.y);
 
-        d3.select("g.x-axis")
+        this.svg.select("g.x-axis")
           .attr("transform", "translate(0," + (this.geometry.height - 20) + ")")
           .call(d3.axisBottom(this.x));
 
-        d3.select("g.y-axis")
+        this.svg.select("g.y-axis")
           .attr("transform", "translate(60,0)")
           .call(d3.axisLeft(this.y));
 
@@ -94,7 +104,7 @@
         //
         const path = d3.line().curve(d3.curveNatural)
           .x((d, i) => this.x(i))
-          .y(d => this.y(d))
+          .y(d => this.y(d));
         this.lines = this.processed.vals.map(i => path(i));
       },
     },
@@ -111,19 +121,38 @@
         const extremes = {
           xMin: 0,
           xMax: 0,
-          yMin: 0,
-          yMax: null
+          yMin: Infinity,
+          yMax: 0
         };
 
         for (const valArr of processed.vals) {
           if (valArr.length - 1 > extremes.xMax) extremes.xMax = valArr.length - 1;
 
           const yMax = Math.max(...valArr);
+          const yMin = Math.min(...valArr);
           if (yMax > extremes.yMax) extremes.yMax = yMax;
+          if (yMin < extremes.yMin) extremes.yMin = yMin;
         }
         processed.extremes = extremes;
 
         return processed;
+      },
+      opts() {
+        const defaultOptions = {
+          y: {
+            type: 'linear'
+          }
+        };
+        return _.merge({}, defaultOptions, this.options);
+      },
+      y() {
+        let y;
+        if (this.opts.y && this.opts.y.type === "log") {
+          y = d3.scaleLog();
+        } else {
+          y = d3.scaleLinear();
+        }
+        return y;
       }
     }
   };
