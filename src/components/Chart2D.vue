@@ -1,11 +1,15 @@
 <template>
-    <div class="container" ref="container">
-        <svg class="svg" ref='svg'>
-            <g class="plot"></g>
-            <g class="x-axis"></g>
-            <g class="y-axis"></g>
-        </svg>
-    </div>
+  <div class="container" ref="container">
+    <svg class="svg" ref='svg'>
+      <g class="origin-lines">
+        <line ref='x-origin' />
+        <line ref='y-origin' />
+      </g>
+      <g class="plot"></g>
+      <g class="x-axis"></g>
+      <g class="y-axis"></g>
+    </svg>
+  </div>
 
 </template>
 
@@ -57,7 +61,7 @@
       this.unique = Math.random();
     },
     watch: {
-      vals() {
+      data() {
         this.refreshChart();
       },
     },
@@ -69,9 +73,8 @@
     methods: {
       refreshChart() {
         const xAxisHeight = 20;
-        const xAxisBottomOffset = 10;
         const yAxisWidth = 60;
-        const yAxisLeftOffset = 10;
+
         // Update chart bounds
         // Must get offsetWidth/height on container, not svg
         this.geometry.width = this.$refs.container.offsetWidth;
@@ -79,18 +82,12 @@
 
         // Set the x-scale
         this.x
-          .range([60, this.geometry.width - 10])
-          .domain([
-            this.opts.x.type === 'log' ? Math.max(this.extremes.xMin, this.extremes.xMinPositive) : this.extremes.xMin,
-            this.opts.x.type === 'log' ? Math.max(this.extremes.xMax, this.extremes.xMinPositive + 1) : this.extremes.xMax,
-          ]);
+          .range([yAxisWidth, this.geometry.width - 10])
+          .domain(this.axisRanges.x);
         // Set the y-scale
         this.y
-          .range([this.geometry.height - 20, 10])
-          .domain([
-            this.opts.y.type === 'log' ? Math.max(this.extremes.yMin, this.extremes.yMinPositive) : this.extremes.yMin,
-            this.opts.y.type === 'log' ? Math.max(this.extremes.yMax, this.extremes.yMinPositive + 1) : this.extremes.yMax,
-          ]);
+          .range([this.geometry.height - xAxisHeight, 10])
+          .domain(this.axisRanges.y);
 
         // Assign the scales to the axes
         d3.axisLeft().scale(this.x);
@@ -104,57 +101,104 @@
           .attr("transform", `translate(${yAxisWidth},0)`)
           .call(d3.axisLeft(this.y));
 
+        if (this.axisRanges.x[0] < 0 && this.axisRanges.x[1] > 0) {
+          d3.select(this.$refs['x-origin'])
+            .attr("x1", this.x(0))
+            .attr("x2", this.x(0))
+            .attr("y1", this.y(this.axisRanges.y[0]))
+            .attr("y2", this.y(this.axisRanges.y[1]))
+            .style('display', '');
+        } else {
+          d3.select(this.$refs['x-origin'])
+            .style('display', 'none');
+        }
+        if (this.axisRanges.y[0] < 0 && this.axisRanges.y[1] > 0) {
+          d3.select(this.$refs['y-origin'])
+            .attr("y1", this.y(0))
+            .attr("y2", this.y(0))
+            .attr("x1", this.x(this.axisRanges.x[0]))
+            .attr("x2", this.x(this.axisRanges.x[1]))
+            .style('display', '');
+        } else {
+          d3.select(this.$refs['y-origin'])
+            .style('display', 'none');
+        }
+
+
         this.svg.select("g.plot")
-          .selectAll('g').
-          data(this.data)
+          .selectAll('g').data(this.data)
           .join('g')
-          .style("fill", (d, i) => this.colors[i%this.colors.length])
-              .selectAll("circle")
-              .data(d => d.filter(d => {
-                if (Number.isNaN(d[0])) return false;
-                if (Number.isNaN(d[1])) return false;
-                // Filter out negative values if log scales
-                if (this.opts.x.type === 'log' && d[0] <= 0) return false;
-                if (this.opts.y.type === 'log' && d[1] <= 0) return false;
-                return true;
-              }))
-              .join("circle")
-              .attr("cx", d => this.x(d[0]))
-              .attr("cy", d => this.y(d[1]))
-              .attr("r", 5.5);
+          .style("fill", (d, i) => this.colors[i % this.colors.length])
+          .selectAll("circle")
+          .data(d => d.filter(d => {
+            if (Number.isNaN(d[0])) return false;
+            if (Number.isNaN(d[1])) return false;
+            // Filter out negative values if log scales
+            if (this.opts.x.type === 'log' && d[0] <= 0) return false;
+            if (this.opts.y.type === 'log' && d[1] <= 0) return false;
+            return true;
+          }))
+          .join("circle")
+          .attr("cx", d => this.x(d[0]))
+          .attr("cy", d => this.y(d[1]))
+          .attr("r", 5)
       },
     },
     computed: {
-      extremes() {
-        const extremes = {
-          xMin: Infinity,
-          xMinPositive: Infinity,
-          xMax: 0,
-          yMin: Infinity,
-          yMinPositive: Infinity,
-          yMax: 0
+      axisRanges() {
+        // Get the minimum x values from every series
+        const minXs = this.data.map(
+          series => Math.min(
+            ...series.map(point => point[0])
+          )
+        );
+        // Then find the lowest absolute x value
+        const minX = Math.min(
+          ...minXs
+        );
+        // And the lowest positive x value
+        const minXPositive = Math.min(
+          ...minXs.filter(p => p > 0)
+        );
+        // Find the highest x values
+        const maxX = Math.max(
+          ...this.data.map(
+            series => Math.max(
+              ...series.map(point => point[0])
+            )
+          )
+        );
+
+        // Repeat for Y's
+        const minYs = this.data.map(
+          series => Math.min(
+            ...series.map(point => point[1])
+          )
+        );
+        const minY = Math.min(
+          ...minYs
+        );
+        const minYPositive = Math.min(
+          ...minYs.filter(p => p > 0)
+        );
+        const maxY = Math.max(
+          ...this.data.map(
+            series => Math.max(
+              ...series.map(point => point[1])
+            )
+          )
+        );
+
+        return {
+          x: [
+            this.opts.x.type === 'log' ? minXPositive : minX,
+            maxX,
+          ],
+          y: [
+            this.opts.y.type === 'log' ? minYPositive : minY,
+            maxY,
+          ],
         };
-
-        for (const series of this.data) {
-          const xs = series.map(p => p[0]);
-          const xMax = Math.max(...xs);
-          const xMin = Math.min(...xs);
-          const xMinPositive = Math.min(...xs.filter(x => x > 0));
-          if (xMax > extremes.xMax) extremes.xMax = xMax;
-          if (xMin < extremes.xMin) extremes.xMin = xMin;
-          if (xMinPositive < extremes.xMinPositive) extremes.xMinPositive = xMinPositive;
-
-
-          const ys = series.map(p => p[1]);
-          const yMax = Math.max(...ys);
-          const yMin = Math.min(...ys);
-          const yMinPositive = Math.min(...ys.filter(y => y > 0));
-          if (yMax > extremes.yMax) extremes.yMax = yMax;
-          if (yMin < extremes.yMin) extremes.yMin = yMin;
-          if (yMinPositive < extremes.yMinPositive) extremes.yMinPositive = yMinPositive;
-        }
-
-        return extremes;
       },
       opts() {
         const defaultOptions = {
@@ -194,17 +238,22 @@
 </script>
 
 <style lang="scss" scoped>
-    .container, svg {
-        width: 100%;
-        height: 100%;
-    }
+  .container, svg {
+    width: 100%;
+    height: 100%;
+  }
 
-    svg {
-    }
+  svg {
+  }
 
-    path {
-        fill: none;
-        stroke-width: 3px;
-    }
+  path {
+    fill: none;
+    stroke-width: 3px;
+  }
+
+  .origin-lines {
+    stroke-width: 1px;
+    stroke: #aaa;
+  }
 
 </style>

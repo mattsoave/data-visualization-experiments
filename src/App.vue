@@ -1,7 +1,7 @@
 <template>
   <div id="app">
-      <div style="height: 600px; background-color: #ddd;">
-          <Chart2D :vals="values" :data="scatterData2" :options="{x:{type:'linear'}, y:{type:'log'}}"/>
+      <div style="height: 600px; background-color: #f3f3f3;">
+          <Chart2D :vals="values" :data="scatterData2" :options="{x:{type:'linear'}, y:{type:'linear'}}"/>
       </div>
       <button @click="addValue">Add</button>
       <div style="height: 600px; background-color: #ddd;">
@@ -50,18 +50,17 @@ export default {
   },
   methods: {
     addValue() {
-      for (let j = 0; j < 20; j++) {
-        for (let i = 0; i < this.values.length; i++) {
-          // this.values[i].push(this.values[i][this.values[i].length - 1]*((i/20+.1)*Math.random()+1));
-          this.values[i].push(Math.sin(this.values[i].length/20)*20 + 21);
-        }
-      }
-      const newScatter = [];
-      for (let i = 1; i < 10; i += 0.1) {
-        newScatter.push([i, Math.pow(2+ Math.random()/10, i ) + Math.random()*10]);
-      }
-      this.scatterData2.push(newScatter);
-
+      let i = -100;
+      setInterval(() => {
+        this.scatterData2[0].push([i, Math.sin(i/100)*20 + Math.random()*100]);
+        // const rand = Math.random()*20;
+        // this.scatterData2[0].push([Math.sin(rand)*50, Math.cos(rand)*50]);
+        // this.scatterData2[0].push([
+        //   (Math.random() + Math.random() + Math.random() + Math.random())*50,
+        //   (Math.random() + Math.random() + Math.random() + Math.random())*50,
+        // ]);
+        i += 1;
+      }, 50);
     },
   }
 }
