@@ -1,5 +1,8 @@
 <template>
   <div id="app">
+      <div style="height: 300px; background-color: #ddd;">
+          <VueScatter :vals="values"/>
+      </div>
     <div style="height: 400px; background-color: #f7f7f7;">
       <VueLineChart :vals="values"/>
     </div>
@@ -12,11 +15,13 @@
 
 <script>
 import VueLineChart from './components/VueLineChart.vue'
+import VueScatter from './components/VueScatter.vue'
 
 export default {
   name: 'app',
   components: {
-    VueLineChart
+    VueLineChart,
+    VueScatter
   },
   data() {
     return {

@@ -1,9 +1,7 @@
 <template>
     <div class="container" ref="container">
         <svg class="svg" ref='svg'>
-            <g>
-                <path v-for="(line, i) in lines" :d="line" :stroke="colors[i%10]" :key="`${unique}${i}`" />
-            </g>
+            <g class="plot"></g>
             <g class="x-axis"></g>
             <g class="y-axis"></g>
         </svg>
@@ -80,7 +78,8 @@
           .range([this.geometry.height - 20, 10])
           .domain([
             // Temp: for log scales, ensure we don't start at 0
-            Math.max(this.processed.extremes.yMin, this.opts.y.type === 'log' ? 1 : null),
+            // Math.max(this.processed.extremes.yMin, this.opts.y.type === 'log' ? 1 : null),
+            0,
             this.processed.extremes.yMax
           ]);
 
@@ -96,6 +95,23 @@
           .attr("transform", "translate(60,0)")
           .call(d3.axisLeft(this.y));
 
+        this.svg.select("g.plot")
+          .selectAll('g').
+          data(
+            [
+              [[1, 1], [2, 2], [3, 4]],
+              [[0.1, 2], [0.2, 2.2], [0.3, 2.5]],
+              [[1.1, 2], [0.6, 3.2], [0.6, 4.5], [3, 6]],
+            ]
+            )
+          .join('g')
+          .style("fill", (d, i) => this.colors[i])
+              .selectAll("circle")
+              .data(d => d)
+              .join("circle")
+              .attr("cx", d => this.x(d[0]))
+              .attr("cy", d => this.y(d[1]))
+              .attr("r", 5.5);
 
         //
         const path = d3.line().curve(d3.curveNatural)
