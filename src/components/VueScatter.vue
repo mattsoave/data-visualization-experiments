@@ -16,7 +16,7 @@
   window.d2 = d3;
 
   export default {
-    name: 'VueLineChart',
+    name: 'VueScatter',
     data() {
       return {
         svg: null,
@@ -36,6 +36,12 @@
       };
     },
     props: {
+      data: {
+        type: Array,
+        default() {
+          return [];
+        },
+      },
       vals: {
         type: Array,
         default() {
@@ -64,6 +70,10 @@
     },
     methods: {
       refreshChart() {
+        const xAxisHeight = 20;
+        const xAxisBottomOffset = 10;
+        const yAxisWidth = 60;
+        const yAxisLeftOffset = 10;
         // Update chart bounds
         // Must get offsetWidth/height on container, not svg
         this.geometry.width = this.$refs.container.offsetWidth;
@@ -72,15 +82,15 @@
         // Set the x-scale
         this.x
           .range([60, this.geometry.width - 10])
-          .domain([this.processed.extremes.xMin, this.processed.extremes.xMax]);
+          .domain([
+            this.extremes.xMin, this.extremes.xMax
+          ]);
         // Set the y-scale
         this.y
           .range([this.geometry.height - 20, 10])
           .domain([
-            // Temp: for log scales, ensure we don't start at 0
-            // Math.max(this.processed.extremes.yMin, this.opts.y.type === 'log' ? 1 : null),
-            0,
-            this.processed.extremes.yMax
+            this.extremes.yMin,
+            this.extremes.yMax
           ]);
 
         // Assign the scales to the axes
@@ -88,22 +98,16 @@
         d3.axisBottom().scale(this.y);
 
         this.svg.select("g.x-axis")
-          .attr("transform", "translate(0," + (this.geometry.height - 20) + ")")
+          .attr("transform", `translate(0,${this.geometry.height - xAxisHeight})`)
           .call(d3.axisBottom(this.x));
 
         this.svg.select("g.y-axis")
-          .attr("transform", "translate(60,0)")
+          .attr("transform", `translate(${yAxisWidth},0)`)
           .call(d3.axisLeft(this.y));
 
         this.svg.select("g.plot")
           .selectAll('g').
-          data(
-            [
-              [[1, 1], [2, 2], [3, 4]],
-              [[0.1, 2], [0.2, 2.2], [0.3, 2.5]],
-              [[1.1, 2], [0.6, 3.2], [0.6, 4.5], [3, 6]],
-            ]
-            )
+          data(this.data)
           .join('g')
           .style("fill", (d, i) => this.colors[i])
               .selectAll("circle")
@@ -121,6 +125,30 @@
       },
     },
     computed: {
+      extremes() {
+        const extremes = {
+          xMin: Infinity,
+          xMax: 0,
+          yMin: Infinity,
+          yMax: 0
+        };
+
+        for (const series of this.data) {
+          const xs = series.map(p => p[0]);
+          const xMax = Math.max(...xs);
+          const xMin = Math.min(...xs);
+          if (xMax > extremes.xMax) extremes.xMax = xMax;
+          if (xMin < extremes.xMin) extremes.xMin = xMin;
+
+          const ys = series.map(p => p[1]);
+          const yMax = Math.max(...ys);
+          const yMin = Math.min(...ys);
+          if (yMax > extremes.yMax) extremes.yMax = yMax;
+          if (yMin < extremes.yMin) extremes.yMin = yMin;
+        }
+
+        return extremes;
+      },
       processed() {
         const processed = {};
 

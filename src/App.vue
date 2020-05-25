@@ -1,8 +1,9 @@
 <template>
   <div id="app">
-      <div style="height: 300px; background-color: #ddd;">
-          <VueScatter :vals="values"/>
+      <div style="height: 600px; background-color: #ddd;">
+          <VueScatter :vals="values" :data="scatterData"/>
       </div>
+      <button @click="addValue">Add</button>
     <div style="height: 400px; background-color: #f7f7f7;">
       <VueLineChart :vals="values"/>
     </div>
@@ -29,6 +30,11 @@ export default {
         [2, 3, 6, 8, 13],
         [2, 5, 7, 10, 25],
         [3, 4, 8, 10],
+      ],
+      scatterData: [
+        [[1, 1], [2, 2], [3, 4]],
+        [[0.1, 2], [0.2, 2.2], [0.3, 2.5]],
+        [[1.1, 2], [0.6, 3.2], [10.6, 4.5], [3, 6]],
       ]
     };
   },
@@ -40,6 +46,11 @@ export default {
           this.values[i].push(Math.sin(this.values[i].length/20)*20 + 21);
         }
       }
+      const newScatter = [];
+      for (let i = 0; i < 100; i++) {
+        newScatter.push([i, Math.sin(i/20)*20 + Math.random()*10 - 5 + 25]);
+      }
+      this.scatterData.push(newScatter);
 
     },
   }
