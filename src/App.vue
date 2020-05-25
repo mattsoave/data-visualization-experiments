@@ -55,7 +55,8 @@ export default {
     addValue() {
       let i = -100;
       setInterval(() => {
-        this.scatterData2[0].push([i, Math.sin(i/100)*20 + Math.random()*100]);
+        this.scatterData2[0].push([i, Math.sin(i/100)*20 + Math.random()*10]);
+        this.scatterData2[1].push([i, Math.sin(i/100 + 1)*20 + Math.random()*10]);
         // const rand = Math.random()*20;
         // this.scatterData2[0].push([Math.sin(rand)*50, Math.cos(rand)*50]);
         // this.scatterData2[0].push([

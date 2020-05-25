@@ -72,8 +72,12 @@
     },
     methods: {
       refreshChart() {
-        const xAxisHeight = 20;
-        const yAxisWidth = 60;
+        const margin = {
+          bottom: 20,
+          left: 60,
+          right: 20,
+          top: 20,
+        };
 
         // Update chart bounds
         // Must get offsetWidth/height on container, not svg
@@ -82,11 +86,12 @@
 
         // Set the x-scale
         this.x
-          .range([yAxisWidth, this.geometry.width - 10])
+          .range([margin.left, this.geometry.width - margin.right])
           .domain(this.axisRanges.x);
+
         // Set the y-scale
         this.y
-          .range([this.geometry.height - xAxisHeight, 10])
+          .range([this.geometry.height - margin.bottom, margin.top])
           .domain(this.axisRanges.y);
 
         // Assign the scales to the axes
@@ -94,11 +99,11 @@
         d3.axisBottom().scale(this.y);
 
         this.svg.select("g.x-axis")
-          .attr("transform", `translate(0,${this.geometry.height - xAxisHeight})`)
+          .attr("transform", `translate(0,${this.geometry.height - margin.bottom})`)
           .call(d3.axisBottom(this.x));
 
         this.svg.select("g.y-axis")
-          .attr("transform", `translate(${yAxisWidth},0)`)
+          .attr("transform", `translate(${margin.left},0)`)
           .call(d3.axisLeft(this.y));
 
         if (this.axisRanges.x[0] < 0 && this.axisRanges.x[1] > 0) {
