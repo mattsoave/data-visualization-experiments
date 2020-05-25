@@ -146,58 +146,81 @@
     },
     computed: {
       axisRanges() {
-        // Get the minimum x values from every series
-        const minXs = this.data.map(
-          series => Math.min(
-            ...series.map(point => point[0])
-          )
-        );
-        // Then find the lowest absolute x value
-        const minX = Math.min(
-          ...minXs
-        );
-        // And the lowest positive x value
-        const minXPositive = Math.min(
-          ...minXs.filter(p => p > 0)
-        );
-        // Find the highest x values
-        const maxX = Math.max(
-          ...this.data.map(
-            series => Math.max(
+        let xLower;
+        let xUpper;
+        let yLower;
+        let yUpper;
+
+        if (this.opts.x.min === 'auto') {
+          // Get the minimum x values from every series
+          const minXs = this.data.map(
+            series => Math.min(
               ...series.map(point => point[0])
             )
-          )
-        );
+          );
+          // Then find the lowest absolute x value
+          const minX = Math.min(
+            ...minXs
+          );
+          // And the lowest positive x value
+          const minXPositive = Math.min(
+            ...minXs.filter(p => p > 0)
+          );
+          xLower = this.opts.x.type === 'log' ? minXPositive : minX;
+        } else {
+          xLower = this.opts.x.min;
+        }
 
-        // Repeat for Y's
-        const minYs = this.data.map(
-          series => Math.min(
-            ...series.map(point => point[1])
-          )
-        );
-        const minY = Math.min(
-          ...minYs
-        );
-        const minYPositive = Math.min(
-          ...minYs.filter(p => p > 0)
-        );
-        const maxY = Math.max(
-          ...this.data.map(
-            series => Math.max(
+        if (this.opts.x.max === 'auto') {
+          // Find the highest x values
+          xUpper = Math.max(
+            ...this.data.map(
+              series => Math.max(
+                ...series.map(point => point[0])
+              )
+            )
+          );
+        } else {
+          xUpper = this.opts.x.max;
+        }
+
+        if (this.opts.y.min === 'auto') {
+          // Get the minimum y values from every series
+          const minYs = this.data.map(
+            series => Math.min(
               ...series.map(point => point[1])
             )
-          )
-        );
+          );
+          // Then find the lowest absolute y value
+          const minY = Math.min(
+            ...minYs
+          );
+          // And the lowest positive y value
+          const minYPositive = Math.min(
+            ...minYs.filter(p => p > 0)
+          );
+          yLower = this.opts.y.type === 'log' ? minYPositive : minY;
+        } else {
+          yLower = this.opts.y.min;
+        }
 
+        if (this.opts.y.max === 'auto') {
+          // Find the highest y values
+          yUpper = Math.max(
+            ...this.data.map(
+              series => Math.max(
+                ...series.map(point => point[1])
+              )
+            )
+          );
+        } else {
+          yUpper = this.opts.y.max;
+        }
+
+        // TODO: handle when xUpper is less than xLower
         return {
-          x: [
-            this.opts.x.type === 'log' ? minXPositive : minX,
-            maxX,
-          ],
-          y: [
-            this.opts.y.type === 'log' ? minYPositive : minY,
-            maxY,
-          ],
+          x: [xLower, xUpper],
+          y: [yLower, yUpper],
         };
       },
       opts() {
