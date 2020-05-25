@@ -6,6 +6,7 @@
         <line ref='y-origin' />
       </g>
       <g class="plot"></g>
+      <g ref="trendlines"></g>
       <g class="x-axis"></g>
       <g class="y-axis"></g>
     </svg>
@@ -146,7 +147,31 @@
           .join("circle")
           .attr("cx", d => this.x(d[0]))
           .attr("cy", d => this.y(d[1]))
-          .attr("r", 5)
+          .attr("r", 5);
+
+        const trendlinesData = this.data.map(series => {
+          const leftMost = [...series].sort((a,b) => a[0] - b[0])[0];
+          const rightMost = [...series].sort((a,b) => b[0] - a[0])[0];
+          return [
+            leftMost,
+            rightMost,
+          ];
+        });
+
+        d3.select(this.$refs.trendlines)
+          .selectAll('path').data(trendlinesData)
+          .join('path')
+          .attr("stroke", "steelblue")
+          .attr("stroke-width", 1.5)
+          .attr('d', d3.line()
+            .x(point => this.x(point[0]))
+            .y(point => this.y(point[1]))
+          );
+
+        // const path = d3.line().curve(d3.curveNatural)
+        //   .x((d, i) => this.x(i))
+        //   .y(d => this.y(d));
+        // this.lines = this.processed.vals.map(i => path(i));
       },
     },
     computed: {
