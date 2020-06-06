@@ -132,11 +132,21 @@
 
 
         this.svg.select("g.plot")
-          .selectAll('g').data(this.data)
+          // State that a list of g elements
+          .selectAll('g')
+          // will represent each series within this.data
+          .data(this.data.filter((s, i) => i % 2 === 0))
+          // and that by default:
+          //   existing elements will be updated,
+          //   new elements will be added,
+          //   and removed elements will be removed.
           .join('g')
           .style("fill", (d, i) => this.colors[i % this.colors.length])
+          // State that a list of circle elements
           .selectAll("circle")
+          // will represent each data point within this.data[n]
           .data(d => d.filter(d => {
+            // For scatter plot, remove invalid points
             if (Number.isNaN(d[0])) return false;
             if (Number.isNaN(d[1])) return false;
             // Filter out negative values if log scales
@@ -144,6 +154,7 @@
             if (this.opts.y.type === 'log' && d[1] <= 0) return false;
             return true;
           }))
+          // default (see above)
           .join("circle")
           .attr("cx", d => this.x(d[0]))
           .attr("cy", d => this.y(d[1]))
