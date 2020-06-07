@@ -7,6 +7,7 @@
       </g>
       <g class="scatters"></g>
       <g class="lines"></g>
+      <g class="loesslines"></g>
       <g class="llslines"></g>
       <g ref="trendlines"></g>
       <g class="x-axis"></g>
@@ -18,6 +19,7 @@
 
 <script>
   import * as d3 from 'd3';
+  import * as science from 'science';
   import * as _ from 'lodash';
 
   window.d2 = d3;
@@ -65,6 +67,12 @@
     },
     watch: {
       data: {
+        deep: true,
+        handler() {
+          this.refreshChart();
+        },
+      },
+      options: {
         deep: true,
         handler() {
           this.refreshChart();
@@ -169,7 +177,7 @@
           .join("circle")
           .attr("cx", d => this.x(d[0]))
           .attr("cy", d => this.y(d[1]))
-          .attr("r", 5);
+          .attr("r", 3);
 
         // Draw the 'line' charts
         this.svg.select("g.lines")
@@ -210,67 +218,112 @@
             .y(point => this.y(point[1]))
           );
 
-        const llsData = this.data.map(series => {
-          const endpoints = [];
+        // TODO: filter lls
+        const llsData = this.data.filter(series => true)
+          .map(series => {
+            const endpoints = [];
 
-          if (series.values.length > 1) {
-            const xs = series.values.map(p => p[0]);
-            const minX = Math.min(...xs);
-            const maxX = Math.max(...xs);
+            if (series.values.length > 1) {
+              const xs = series.values.map(p => p[0]);
+              const minX = Math.min(...xs);
+              const maxX = Math.max(...xs);
 
-            let sumX = 0;
-            let sumY = 0;
-            let sumXX = 0;
-            let sumXY = 0;
+              let sumX = 0;
+              let sumY = 0;
+              let sumXX = 0;
+              let sumXY = 0;
 
-            for (const p of series.values) {
-              const x = p[0];
-              const y = p[1];
-              sumX += x;
-              sumY += y;
-              sumXY += x * y;
-              sumXX += x * x;
+              for (const p of series.values) {
+                const x = p[0];
+                const y = p[1];
+                sumX += x;
+                sumY += y;
+                sumXY += x * y;
+                sumXX += x * x;
+              }
+
+              const n = series.values.length;
+              const m = (n * sumXY - sumX * sumY) / (n * sumXX - Math.pow(sumX, 2));
+              const b = (sumY - m * sumX) / n;
+              const y = x => m * x + b;
+
+              endpoints.push([minX, y(minX)]);
+              endpoints.push([maxX, y(maxX)]);
             }
 
-            const n = series.values.length;
-            const m = (n * sumXY - sumX * sumY) / (n * sumXX - Math.pow(sumX, 2));
-            const b = (sumY - m * sumX) / n;
-            const y = x => m * x + b;
+            return {
+              options: {},
+              values: endpoints,
+            }
+          });
 
-            endpoints.push([minX, y(minX)]);
-            endpoints.push([maxX, y(maxX)]);
-          }
+        if (false) {
+          // Draw the lls lines
+          this.svg.select("g.llslines")
+            // State that a list of path elements
+            .selectAll('path')
+            // will represent each series within this.data
+            .data(llsData)
+            // and that by default:
+            //   existing elements will be updated,
+            //   new elements will be added,
+            //   and removed elements will be removed.
+            .join('path')
+            // State that a list of circle elements
+            .attr("stroke", series => {
+              if (series.options && series.options.color) {
+                return series.options.color;
+              }
+              const i = llsData.indexOf(series);
+              return this.colors[i % this.colors.length];
+            })
+            .datum(series => {
+              if (series.options.sort) {
+                return series.values.slice().sort((a,b) => a[0] - b[0]);
+              }
+              return series.values;
+            })
+            .attr("stroke-width", 0.5)
+            .attr('fill', 'none')
+            .attr('d', d3.line()
+              .defined(d => {
+                if (isNaN(d[0] + d[1])) return false;
+                // Filter out negative values if log scales
+                if (this.opts.x.type === 'log' && d[0] <= 0) return false;
+                if (this.opts.y.type === 'log' && d[1] <= 0) return false;
+                return true;
+              })
+              .x(point => this.x(point[0]))
+              .y(point => this.y(point[1]))
+            );
+        }
 
-          return {
-            options: {},
-            values: endpoints,
-          }
-        });
 
-        // Draw the lls lines
-        this.svg.select("g.llslines")
+        const loess = science.stats.loess().bandwidth(this.opts.loessBandwidth);
+
+        // Draw the loess lines
+        this.svg.select("g.loesslines")
           // State that a list of path elements
           .selectAll('path')
           // will represent each series within this.data
-          .data(llsData)
+          .data(this.data)
           // and that by default:
           //   existing elements will be updated,
           //   new elements will be added,
           //   and removed elements will be removed.
           .join('path')
-          // State that a list of circle elements
           .attr("stroke", series => {
             if (series.options && series.options.color) {
               return series.options.color;
             }
-            const i = llsData.indexOf(series);
+            const i = this.data.indexOf(series);
             return this.colors[i % this.colors.length];
           })
           .datum(series => {
-            if (series.options.sort) {
-              return series.values.slice().sort((a,b) => a[0] - b[0]);
-            }
-            return series.values;
+            const points = series.values.slice().sort((a,b) => a[0] - b[0]);
+            const xs = points.map(p => p[0]);
+            const ys = points.map(p => p[1]);
+            return d3.zip(xs, loess(xs, ys));
           })
           .attr("stroke-width", 0.5)
           .attr('fill', 'none')
@@ -285,7 +338,6 @@
             .x(point => this.x(point[0]))
             .y(point => this.y(point[1]))
           );
-
 
         // const trendlinesData = this.data.map(series => {
         //   const leftMost = [...series.values].sort((a,b) => a[0] - b[0])[0];
@@ -374,7 +426,8 @@
             type: 'linear',
             min: 'auto',
             max: 'auto',
-          }
+          },
+          loessBandwidth: 0.3,
         };
         return _.merge({}, defaultOptions, this.options);
       },
