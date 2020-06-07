@@ -1,23 +1,23 @@
 <template>
   <div id="app">
-      <div style="height: 600px; background-color: #f3f3f3;">
-          <Chart2D :vals="values" :data="scatterData2" :options="{
+    <div style="height: 600px; background-color: #f3f3f3;">
+      <Chart2D :vals="values" :data="scatterData2" :options="{
             x:{type:'linear'},
             y:{type:'linear'}
           }"/>
-      </div>
-      <button @click="addValue">Add</button>
-      <div style="height: 600px; background-color: #ddd;">
-          <VueScatter :vals="values" :data="scatterData"/>
-      </div>
-      <button @click="addValue">Add</button>
-    <div style="height: 400px; background-color: #f7f7f7;">
-      <VueLineChart :vals="values"/>
-    </div>
-    <div style="height: 400px; background-color: #f7f7f7;">
-      <VueLineChart :vals="values" :options="{y:{type:'log'}}"/>
     </div>
     <button @click="addValue">Add</button>
+<!--    <div style="height: 600px; background-color: #ddd;">-->
+<!--      <VueScatter :vals="values" :data="scatterData"/>-->
+<!--    </div>-->
+<!--    <button @click="addValue">Add</button>-->
+<!--    <div style="height: 400px; background-color: #f7f7f7;">-->
+<!--      <VueLineChart :vals="values"/>-->
+<!--    </div>-->
+<!--    <div style="height: 400px; background-color: #f7f7f7;">-->
+<!--      <VueLineChart :vals="values" :options="{y:{type:'log'}}"/>-->
+<!--    </div>-->
+<!--    <button @click="addValue">Add</button>-->
   </div>
 </template>
 
@@ -41,9 +41,23 @@ export default {
         [3, 4, 8, 10],
       ],
       scatterData: [
-        [[1, -1], [1.3, 0.3], [2, 2], [3, 4]],
-        [[-0.1, 2], [0.2, 2.2], [0.3, 2.5]],
-        [[1.1, 2], [0.6, 3.2], [10.6, 4.5], [3, 11]],
+        {
+          values: [],
+          options: {
+            type: 'line',
+            sort: true,
+          },
+        },
+        {
+          values: [],
+          options: {
+            type: 'scatter',
+          },
+        },
+        // {
+        //   values: [[1.1, 2], [0.6, 3.2], [10.6, 4.5], [3, 11]],
+        //   options: {},
+        // },
       ],
       scatterData2: [[]]
     };
@@ -53,10 +67,10 @@ export default {
   },
   methods: {
     addValue() {
-      let i = -100;
+      let i = -50;
       setInterval(() => {
-        this.scatterData2[0].push([i, Math.sin(i/100)*20 + Math.random()*10]);
-        this.scatterData2[1].push([i, Math.sin(i/100 + 1)*20 + Math.random()*10]);
+        this.scatterData2[0].values.push([i, Math.sin(i/100)*20 + 5]);
+        this.scatterData2[1].values.push([i, Math.sin(i/100 + 1)*20 + Math.random()*10]);
         // const rand = Math.random()*20;
         // this.scatterData2[0].push([Math.sin(rand)*50, Math.cos(rand)*50]);
         // this.scatterData2[0].push([
