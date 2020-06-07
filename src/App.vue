@@ -42,7 +42,7 @@ export default {
       ],
       scatterData: [
         {
-          values: [],
+            values: [[1.1, 2], [0.6, 3.2], [10.6, 4.5], [3, 11]],
           options: {
             type: 'line',
             sort: true,
