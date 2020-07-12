@@ -22,7 +22,7 @@
   import * as science from 'science';
   import * as _ from 'lodash';
 
-  window.d2 = d3;
+  window.d3 = d3;
 
   export default {
     name: 'Chart2D',

@@ -1,14 +1,24 @@
 <template>
   <div id="app">
     <div style="height: 600px; background-color: #f3f3f3;">
+      <ChartHistogram :data="histogramSource" :options="{binCount}" />
+    </div>
+    <button @click="addToHistogram">Add</button>
+    <div>
+      <input type="range" name="binCount"
+             min="5" max="100" v-model.number="binCount" step="5" style="width: 300px;">
+      <label for="binCount">binCount: {{binCount}}</label>
+    </div>
+    <hr />
+    <div style="height: 600px; background-color: #f3f3f3;">
       <Chart2D :vals="values" :data="weightData" :options="{
             x:{
               type:'linear',
-              min: 18000,
+              // min: 18000,
             },
             y:{
               type:'linear',
-              max: 164,
+              // max: 164,
             },
             loessBandwidth,
           }"/>
@@ -37,6 +47,7 @@
 import VueLineChart from './components/VueLineChart.vue'
 import VueScatter from './components/VueScatter.vue'
 import Chart2D from './components/Chart2D.vue'
+import ChartHistogram from './components/ChartHistogram.vue'
 import weight from './data/weight.js';
 
 export default {
@@ -44,11 +55,13 @@ export default {
   components: {
     VueLineChart,
     VueScatter,
-    Chart2D
+    Chart2D,
+    ChartHistogram,
   },
   data() {
     return {
       loessBandwidth: 0.4,
+      binCount: 20,
       values: [
         [2, 3, 6, 8, 13],
         [2, 5, 7, 10, 25],
@@ -78,13 +91,20 @@ export default {
         //   options: {},
         // },
       ],
-      scatterData2: [[]]
+      scatterData2: [[]],
+      histogramSource: [],
     };
   },
   created() {
+    this.addToHistogram();
     this.scatterData2 = this.scatterData.map(a=>a);
   },
   methods: {
+    addToHistogram() {
+      for (let a = 0; a < 200; a++) {
+        this.histogramSource.push(500*(Math.random() + Math.random()));
+      }
+    },
     // addValue() {
     //   let i = -50;
     //   setInterval(() => {

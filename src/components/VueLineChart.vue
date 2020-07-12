@@ -15,7 +15,7 @@
   import * as d3 from 'd3';
   import * as _ from 'lodash';
 
-  window.d2 = d3;
+  window.d3 = d3;
 
   export default {
     name: 'VueLineChart',
