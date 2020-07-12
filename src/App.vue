@@ -1,12 +1,15 @@
 <template>
   <div id="app">
-    <div style="height: 600px; background-color: #f3f3f3;">
-      <ChartHistogram :data="histogramSource" :options="{binCount}" />
+    <div style="height: 300px; background-color: #f3f3f3;">
+      <ChartHistogram :data="histogramSource" :options="{binCount, x: {min: 0, max: 2}}" />
+    </div>
+    <div style="height: 300px; background-color: #f3f3f3;">
+      <ChartHistogram :data="histogramSource2" :options="{binCount, x: {min: 0, max: 2}}" />
     </div>
     <button @click="addToHistogram">Add</button>
     <div>
       <input type="range" name="binCount"
-             min="5" max="100" v-model.number="binCount" step="1" style="width: 300px;">
+             min="5" max="200" v-model.number="binCount" step="1" style="width: 300px;">
       <label for="binCount">binCount: {{binCount}}</label>
     </div>
     <hr />
@@ -61,7 +64,7 @@ export default {
   data() {
     return {
       loessBandwidth: 0.4,
-      binCount: 20,
+      binCount: 200,
       values: [
         [2, 3, 6, 8, 13],
         [2, 5, 7, 10, 25],
@@ -93,6 +96,7 @@ export default {
       ],
       scatterData2: [[]],
       histogramSource: [],
+      histogramSource2: [],
     };
   },
   created() {
@@ -101,9 +105,34 @@ export default {
   },
   methods: {
     addToHistogram() {
-      for (let a = 0; a < 200; a++) {
-        this.histogramSource.push(500*(Math.random() + Math.random()));
+      // for (let a = 0; a < 200; a++) {
+      //   this.histogramSource.push(500*(Math.random() + Math.random()));
+      // }
+
+      const effect = 1.01;
+
+      for (let b = 0; b < 2000; b++) {
+        let c = 0;
+        let t1 = 0;
+        for (let a = 0; a < 1000; a++) {
+          c += Math.random() * 1;
+          t1 += Math.random() * effect;
+        }
+        const result = t1/c;
+        this.histogramSource.push(result);
       }
+
+      for (let b = 0; b < 2000; b++) {
+        let c = 0;
+        let t1 = 0;
+        for (let a = 0; a < 400; a++) {
+          c += Math.random() * 1;
+          t1 += Math.random() * effect;
+        }
+        const result = t1/c;
+        this.histogramSource2.push(result);
+      }
+
     },
     // addValue() {
     //   let i = -50;
