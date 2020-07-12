@@ -139,6 +139,7 @@
     computed: {
       x() {
         const x = d3.scaleLinear()
+        // .domain(d3.extent(this.data)).nice(this.opts.binCount)
         .domain(d3.extent(this.data))
         .range([this.config.margin.left, this.geometry.width - this.config.margin.right]);
 
@@ -158,15 +159,22 @@
       },
       histogram() {
         const binCount = this.opts.binCount;
+        // https://github.com/d3/d3-array/issues/46
+        const [min, max] = d3.extent(this.data);
+        const diff = max - min;
+        const thresholds = d3.range(min, max, diff / binCount);
+        console.log({thresholds});
         const histogram = d3.histogram()
           .value(d => d)
           .domain(this.x.domain())
-          .thresholds(this.x.ticks(binCount));
+          .thresholds(thresholds);
 
         return histogram;
       },
       bins() {
-        return this.histogram(this.data);
+        const bins = this.histogram(this.data);
+        console.log('bins', bins);
+        return bins;
       },
       // axisRanges() {
       //   let xLower;

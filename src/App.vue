@@ -6,7 +6,7 @@
     <button @click="addToHistogram">Add</button>
     <div>
       <input type="range" name="binCount"
-             min="5" max="100" v-model.number="binCount" step="5" style="width: 300px;">
+             min="5" max="100" v-model.number="binCount" step="1" style="width: 300px;">
       <label for="binCount">binCount: {{binCount}}</label>
     </div>
     <hr />
