@@ -87,15 +87,29 @@
         this.geometry.width = this.$refs.container.offsetWidth;
         this.geometry.height = this.$refs.container.offsetHeight;
 
-        // // Set the x-scale
-        // this.x
-        //   .range([margin.left, this.geometry.width - margin.right])
-        //   .domain(this.axisRanges.x);
-        //
-        // // Set the y-scale
-        // this.y
-        //   .range([this.geometry.height - margin.bottom, margin.top])
-        //   .domain(this.axisRanges.y);
+        const binCount = this.opts.binCount;
+        const histogram = d3.histogram()
+          .value(d => d);
+
+
+
+        // Set the x-scale
+        const x = d3.scaleLinear()
+          .domain(d3.extent(this.data))
+          .range([this.config.margin.left, this.geometry.width - this.config.margin.right]);
+
+        histogram.domain(x.domain())
+          .thresholds(x.ticks(binCount));
+
+        const bins = histogram(this.data);
+        console.log(bins.length);
+
+        // Set the y-scale
+        const binLengths = bins.map(bin => bin.length);
+        const maxY = Math.max(...binLengths);
+        const y = d3.scaleLinear()
+          .domain([0, maxY])
+          .range([this.maxBarHeight, this.config.margin.top]);
 
         // Assign the scales to the axes
         d3.axisLeft().scale(this.x);
@@ -103,32 +117,34 @@
 
         this.svg.select("g.x-axis")
           .attr("transform", `translate(0,${this.geometry.height - this.config.margin.bottom})`)
-          .call(d3.axisBottom(this.x));
+          .call(d3.axisBottom(x));
 
         this.svg.select("g.y-axis")
           .attr("transform", `translate(${this.config.margin.left},0)`)
-          .call(d3.axisLeft(this.y));
+          .call(d3.axisLeft(y));
+
+
 
         this.svg.select("g.bars")
           .selectAll("rect")
-          .data(this.bins)
+          .data(bins)
           .join("rect")
-          .attr("x", d => this.x(d.x0))
-          .attr("y", d => this.y(d.length))
+          .attr("x", d => x(d.x0))
+          .attr("y", d => y(d.length))
           // .attr("transform", d => {
           //   const translateX = this.x(d.x0);
           //   const translateY = this.y(d.length);
           //   return `translate(${translateX},${translateY})`;
           // })
           .attr("width", d => {
-            const pxRight = this.x(d.x1);
-            const pxLeft = this.x(d.x0);
+            const pxRight = x(d.x1);
+            const pxLeft = x(d.x0);
             const gap = 1;
             const barWidth = pxRight - pxLeft;
             const displayWidth = barWidth - gap;
             return displayWidth;
           })
-          .attr("height", d => this.maxBarHeight - this.y(d.length))
+          .attr("height", d => this.maxBarHeight - y(d.length))
           .style("fill", this.colors[0])
 
 
@@ -137,36 +153,20 @@
       },
     },
     computed: {
-      x() {
-        const x = d3.scaleLinear()
-        .domain(d3.extent(this.data))
-        .range([this.config.margin.left, this.geometry.width - this.config.margin.right]);
-
-        return x;
-      },
       maxBarHeight() {
         return this.geometry.height - this.config.margin.bottom;
       },
-      y() {
-        const binLengths = this.bins.map(bin => bin.length);
-        const maxY = Math.max(...binLengths);
-        const y = d3.scaleLinear()
-          .domain([0, maxY])
-          .range([this.maxBarHeight, this.config.margin.top]);
-
-        return y;
-      },
       histogram() {
-        const binCount = this.opts.binCount;
-        const histogram = d3.histogram()
-          .value(d => d)
-          .domain(this.x.domain())
-          .thresholds(this.x.ticks(binCount));
-
-        return histogram;
+        // const binCount = this.opts.binCount;
+        // const histogram = d3.histogram()
+        //   .value(d => d)
+        //   .domain(this.x.domain())
+        //   .thresholds(this.x.ticks(binCount));
+        //
+        // return histogram;
       },
       bins() {
-        return this.histogram(this.data);
+        // return this.histogram(this.data);
       },
       // axisRanges() {
       //   let xLower;
